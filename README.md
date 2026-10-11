@@ -93,6 +93,10 @@ Endpoint & Key · Models · Combos & Vision · Token Saver · CLI Tools · Media
 | `tests/` | Vitest suite (`tests/unit/brand-policy.test.js` covers the brand layer) |
 | `docs/ARCHITECTURE.md` | Request lifecycle and data model |
 
+## Deploy to Railway
+
+For a persistent hosted deployment, use Railway with the repository's Dockerfile and a volume mounted at `/app/data`. See the [Railway deployment guide](docs/RAILWAY.md) for the service, healthcheck, and secret settings. The app uses a local SQLite database and is not suitable for Vercel's ephemeral serverless filesystem.
+
 ## Tests
 
 ```bash

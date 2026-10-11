@@ -2,6 +2,8 @@
 
 Run FlagshipRouter in a container. Build the image locally (see below) or publish it to your own GHCR namespace with `.github/workflows/docker-publish.yml` — multi-platform `linux/amd64` + `linux/arm64`.
 
+For a hosted Railway deployment, see the [Railway deployment guide](docs/RAILWAY.md). Attach a persistent volume at `/app/data`; the app uses SQLite and should run as a single replica.
+
 ---
 
 # 👤 For Users
