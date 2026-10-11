@@ -154,8 +154,22 @@ function killProcess(pid, force = false, sudoPassword = null) {
 
 function deriveKey() {
   try {
-    const { machineIdSync } = require("node-machine-id");
-    const raw = machineIdSync();
+    let raw;
+    if (process.platform === "linux") {
+      for (const file of ["/var/lib/dbus/machine-id", "/etc/machine-id"]) {
+        try {
+          raw = fs.readFileSync(file, "utf8").trim();
+          if (raw) break;
+        } catch (error) {
+          if (error.code !== "ENOENT" && error.code !== "EACCES") throw error;
+        }
+      }
+      raw = raw || os.hostname();
+      raw = crypto.createHash("sha256").update(raw.toLowerCase()).digest("hex");
+    } else {
+      const { machineIdSync } = require("node-machine-id");
+      raw = machineIdSync();
+    }
     return crypto.createHash("sha256").update(raw + ENCRYPT_SALT).digest();
   } catch {
     return crypto.createHash("sha256").update(ENCRYPT_SALT).digest();

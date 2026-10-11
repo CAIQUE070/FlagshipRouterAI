@@ -1,6 +1,7 @@
 import { machineIdSync } from 'node-machine-id';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import crypto from 'node:crypto';
 import { DATA_DIR } from '@/lib/dataDir';
 
@@ -11,8 +12,23 @@ const CLI_AUTH_SALT = 'fr-cli-auth';
 let cachedRawId = null;
 let cachedCliSecret = null;
 
-// Persist raw machine ID to file → guarantees CLI/server/middleware see same value
-// even when machineIdSync fails or returns inconsistent values across runtimes.
+function getSystemMachineId() {
+  if (process.platform !== 'linux') return machineIdSync();
+
+  for (const file of ['/var/lib/dbus/machine-id', '/etc/machine-id']) {
+    try {
+      const id = fs.readFileSync(file, 'utf8').trim();
+      if (id) return crypto.createHash('sha256').update(id.toLowerCase()).digest('hex');
+    } catch (error) {
+      if (error.code !== 'ENOENT' && error.code !== 'EACCES') throw error;
+    }
+  }
+
+  const hostname = os.hostname().trim().toLowerCase();
+  return hostname ? crypto.createHash('sha256').update(hostname).digest('hex') : crypto.randomUUID();
+}
+
+// Persist the machine ID so CLI/server/middleware use the same value across runtimes.
 function loadRawMachineId() {
   if (cachedRawId) return cachedRawId;
   try {
@@ -20,7 +36,7 @@ function loadRawMachineId() {
     if (cachedRawId) return cachedRawId;
   } catch {}
   try {
-    cachedRawId = machineIdSync();
+    cachedRawId = getSystemMachineId();
   } catch {
     cachedRawId = crypto.randomUUID();
   }
